@@ -12,10 +12,10 @@ serve(async (req) => {
 
   try {
     const { title, description, platform } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error('AI API key not configured');
+    if (!GEMINI_API_KEY) {
+      throw new Error('Gemini API key not configured');
     }
 
     console.log('Generating caption for platform:', platform);
@@ -28,7 +28,9 @@ serve(async (req) => {
       pinterest: 'SEO-friendly, include keywords, descriptive'
     };
 
-    const prompt = `Create an engaging social media caption for ${platform} based on this content:
+    const prompt = `You are a social media expert who creates engaging captions.
+
+Create an engaging social media caption for ${platform} based on this content:
 
 Title: ${title}
 Description: ${description}
@@ -37,29 +39,28 @@ Guidelines for ${platform}: ${platformGuidelines[platform] || 'Keep it engaging'
 
 Return ONLY the caption text, nothing else.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You are a social media expert who creates engaging captions.' },
-          { role: 'user', content: prompt }
-        ],
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI API error:', errorText);
-      throw new Error(`AI API error: ${response.status}`);
+      console.error('Gemini API error:', errorText);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const caption = data.choices[0].message.content;
+    const caption = data.candidates[0].content.parts[0].text;
 
     return new Response(
       JSON.stringify({ caption }),
