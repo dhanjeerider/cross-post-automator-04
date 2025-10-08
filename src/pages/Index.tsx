@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { VideoAutomation } from "@/components/automation/VideoAutomation";
 import { SocialComposer } from "@/components/automation/SocialComposer";
 import { Settings } from "@/components/automation/Settings";
+import { PreviewDialog } from "@/components/PreviewDialog";
 import { Zap, Video, MessageSquare, Settings as SettingsIcon, LogOut } from "lucide-react";
 
 const Index = () => {
@@ -76,6 +77,7 @@ const Index = () => {
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 {session.user.email}
               </span>
+              <PreviewDialog />
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
