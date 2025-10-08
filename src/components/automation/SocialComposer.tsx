@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -6,39 +6,83 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Upload, Send, Instagram, Facebook, Twitter } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Sparkles, Send, Instagram, Facebook, Loader2 } from "lucide-react";
 import { FaPinterest } from "react-icons/fa";
-import { SiThreads } from "react-icons/si";
 
-export const SocialComposer = () => {
+interface SocialComposerProps {
+  userId: string;
+}
+
+export const SocialComposer = ({ userId }: SocialComposerProps) => {
   const { toast } = useToast();
   const [content, setContent] = useState("");
+  const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedPlatforms, setSelectedPlatforms] = useState({
-    instagram: true,
-    facebook: true,
-    twitter: true,
-    pinterest: false,
-    threads: false,
-  });
+  const [connectedAccounts, setConnectedAccounts] = useState<any[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    fetchConnectedAccounts();
+  }, [userId]);
+
+  const fetchConnectedAccounts = async () => {
+    const { data } = await supabase
+      .from('connected_accounts')
+      .select('platform')
+      .eq('user_id', userId)
+      .eq('is_active', true);
+
+    if (data) {
+      setConnectedAccounts(data);
+      const platforms: Record<string, boolean> = {};
+      data.forEach(account => {
+        platforms[account.platform] = false;
+      });
+      setSelectedPlatforms(platforms);
+    }
+  };
 
   const handleGenerateContent = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "Prompt Required",
+        description: "Please describe what you want to post about",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
-    
-    // Simulate AI generation
-    setTimeout(() => {
-      setContent(
-        "🚀 Exciting news! We're launching something amazing today. Stay tuned for updates! ✨\n\n#NewProduct #Innovation #Tech"
-      );
-      setIsGenerating(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-ai-caption', {
+        body: { 
+          title: prompt,
+          description: "",
+          platform: Object.keys(selectedPlatforms)[0] || "instagram"
+        }
+      });
+
+      if (error) throw error;
+
+      setContent(data.caption);
       toast({
         title: "Content Generated!",
         description: "AI has created your social media post",
       });
-    }, 2000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate content",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     const platforms = Object.entries(selectedPlatforms)
       .filter(([_, selected]) => selected)
       .map(([platform]) => platform);
@@ -62,12 +106,12 @@ export const SocialComposer = () => {
     }
 
     toast({
-      title: "Posted Successfully!",
-      description: `Your content has been posted to ${platforms.join(", ")}`,
+      title: "Coming Soon!",
+      description: "Direct posting will be available once you connect your accounts in Settings",
     });
   };
 
-  const togglePlatform = (platform: keyof typeof selectedPlatforms) => {
+  const togglePlatform = (platform: string) => {
     setSelectedPlatforms((prev) => ({
       ...prev,
       [platform]: !prev[platform],
@@ -81,25 +125,29 @@ export const SocialComposer = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            Content Creator
+            AI Content Creator
           </CardTitle>
           <CardDescription>
-            Generate AI-powered content or write your own post
+            Generate engaging content with AI
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* AI Generation */}
           <div className="space-y-3">
-            <Label>AI Content Generator</Label>
+            <Label>What do you want to post about?</Label>
             <div className="flex gap-2">
-              <Input placeholder="Describe what you want to post about..." />
+              <Input 
+                placeholder="e.g., My new product launch, fitness tips, travel photos..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
               <Button
                 onClick={handleGenerateContent}
                 disabled={isGenerating}
                 className="bg-gradient-primary"
               >
                 {isGenerating ? (
-                  <>Generating...</>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
@@ -118,24 +166,12 @@ export const SocialComposer = () => {
               placeholder="Write your post here or generate with AI..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={8}
+              rows={10}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
               {content.length} characters
             </p>
-          </div>
-
-          {/* Media Upload */}
-          <div className="space-y-2">
-            <Label>Add Media (Optional)</Label>
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-smooth cursor-pointer">
-              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Click to upload images or videos
-              </p>
-              <input type="file" className="hidden" accept="image/*,video/*" multiple />
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -147,50 +183,41 @@ export const SocialComposer = () => {
           <CardDescription>Choose where to post your content</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <PlatformCheckbox
-              icon={<Instagram className="w-5 h-5 text-pink-500" />}
-              label="Instagram"
-              checked={selectedPlatforms.instagram}
-              onCheckedChange={() => togglePlatform("instagram")}
-            />
-            <PlatformCheckbox
-              icon={<Facebook className="w-5 h-5 text-blue-600" />}
-              label="Facebook"
-              checked={selectedPlatforms.facebook}
-              onCheckedChange={() => togglePlatform("facebook")}
-            />
-            <PlatformCheckbox
-              icon={<Twitter className="w-5 h-5 text-sky-500" />}
-              label="Twitter"
-              checked={selectedPlatforms.twitter}
-              onCheckedChange={() => togglePlatform("twitter")}
-            />
-            <PlatformCheckbox
-              icon={<FaPinterest className="w-5 h-5 text-red-600" />}
-              label="Pinterest"
-              checked={selectedPlatforms.pinterest}
-              onCheckedChange={() => togglePlatform("pinterest")}
-            />
-            <PlatformCheckbox
-              icon={<SiThreads className="w-5 h-5" />}
-              label="Threads"
-              checked={selectedPlatforms.threads}
-              onCheckedChange={() => togglePlatform("threads")}
-            />
-          </div>
+          {connectedAccounts.length === 0 ? (
+            <div className="p-8 text-center border border-dashed border-border rounded-lg">
+              <p className="text-sm text-muted-foreground mb-4">
+                No platforms connected yet.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Go to Settings to connect your social media accounts
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {connectedAccounts.map((account) => (
+                  <PlatformCheckbox
+                    key={account.platform}
+                    platform={account.platform}
+                    checked={selectedPlatforms[account.platform] || false}
+                    onCheckedChange={() => togglePlatform(account.platform)}
+                  />
+                ))}
+              </div>
 
-          <Button onClick={handlePost} className="w-full bg-gradient-primary" size="lg">
-            <Send className="w-4 h-4 mr-2" />
-            Post to All Selected Platforms
-          </Button>
+              <Button onClick={handlePost} className="w-full bg-gradient-primary" size="lg">
+                <Send className="w-4 h-4 mr-2" />
+                Post to Selected Platforms
+              </Button>
+            </>
+          )}
 
           <div className="p-4 rounded-lg bg-secondary/50 border border-border">
             <h4 className="font-medium text-sm mb-2">Platform Requirements:</h4>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Connect your accounts in Settings first</li>
               <li>• Character limits apply per platform</li>
-              <li>• Video formats may vary</li>
+              <li>• Some platforms require approval for posting</li>
             </ul>
           </div>
         </CardContent>
@@ -200,23 +227,37 @@ export const SocialComposer = () => {
 };
 
 interface PlatformCheckboxProps {
-  icon: React.ReactNode;
-  label: string;
+  platform: string;
   checked: boolean;
   onCheckedChange: () => void;
 }
 
-const PlatformCheckbox = ({ icon, label, checked, onCheckedChange }: PlatformCheckboxProps) => {
+const PlatformCheckbox = ({ platform, checked, onCheckedChange }: PlatformCheckboxProps) => {
+  const getPlatformIcon = (platform: string) => {
+    switch (platform) {
+      case 'instagram':
+        return <Instagram className="w-5 h-5 text-pink-500" />;
+      case 'facebook':
+        return <Facebook className="w-5 h-5 text-blue-600" />;
+      case 'pinterest':
+        return <FaPinterest className="w-5 h-5 text-red-600" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-secondary/50 transition-smooth">
-      <Checkbox checked={checked} onCheckedChange={onCheckedChange} id={label} />
+      <Checkbox checked={checked} onCheckedChange={onCheckedChange} id={platform} />
       <label
-        htmlFor={label}
+        htmlFor={platform}
         className="flex items-center gap-2 flex-1 cursor-pointer"
       >
-        {icon}
-        <span className="font-medium">{label}</span>
+        {getPlatformIcon(platform)}
+        <span className="font-medium capitalize">{platform}</span>
       </label>
     </div>
   );
 };
+
+export default SocialComposer;

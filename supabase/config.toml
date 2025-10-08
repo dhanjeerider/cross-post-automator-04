@@ -1,1 +1,7 @@
 project_id = "graluwrigdryungsfwfw"
+
+[functions.fetch-youtube-video]
+verify_jwt = true
+
+[functions.generate-ai-caption]
+verify_jwt = true

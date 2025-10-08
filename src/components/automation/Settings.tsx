@@ -1,148 +1,203 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Key, Youtube, Instagram, Facebook, Twitter, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Youtube, Instagram, Facebook, Shield, Loader2 } from "lucide-react";
 import { FaPinterest } from "react-icons/fa";
-import { SiThreads } from "react-icons/si";
 
-export const Settings = () => {
+interface SettingsProps {
+  userId: string;
+}
+
+export const Settings = ({ userId }: SettingsProps) => {
   const { toast } = useToast();
+  const [connectedAccounts, setConnectedAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchConnectedAccounts();
+  }, [userId]);
+
+  const fetchConnectedAccounts = async () => {
+    const { data, error } = await supabase
+      .from('connected_accounts')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching accounts:', error);
+    } else {
+      setConnectedAccounts(data || []);
+    }
+    setLoading(false);
+  };
+
+  const isConnected = (platform: string) => {
+    return connectedAccounts.some(
+      account => account.platform === platform && account.is_active
+    );
+  };
 
   const handleConnect = (platform: string) => {
     toast({
-      title: "Opening Authorization",
-      description: `Connecting to ${platform}...`,
+      title: "Coming Soon!",
+      description: `OAuth connection for ${platform} will be available soon. For now, you can use the YouTube API for fetching videos.`,
     });
   };
 
+  const handleDisconnect = async (platform: string) => {
+    const { error } = await supabase
+      .from('connected_accounts')
+      .update({ is_active: false })
+      .eq('user_id', userId)
+      .eq('platform', platform as any);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to disconnect account",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: `Disconnected from ${platform}` });
+      fetchConnectedAccounts();
+    }
+  };
+
+  const platforms = [
+    {
+      name: "YouTube",
+      icon: <Youtube className="w-5 h-5 text-red-500" />,
+      platform: "youtube",
+      description: "Fetch and post videos"
+    },
+    {
+      name: "Instagram",
+      icon: <Instagram className="w-5 h-5 text-pink-500" />,
+      platform: "instagram",
+      description: "Post Reels and photos"
+    },
+    {
+      name: "Facebook",
+      icon: <Facebook className="w-5 h-5 text-blue-600" />,
+      platform: "facebook",
+      description: "Post to Pages and Groups"
+    },
+    {
+      name: "Pinterest",
+      icon: <FaPinterest className="w-5 h-5 text-red-600" />,
+      platform: "pinterest",
+      description: "Create Pins"
+    }
+  ];
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* API Keys */}
-      <Card className="border-border shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="w-5 h-5 text-primary" />
-            Platform API Keys
-          </CardTitle>
-          <CardDescription>
-            Securely stored and encrypted
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <ApiKeyInput
-              label="YouTube Data API Key"
-              icon={<Youtube className="w-4 h-4 text-red-500" />}
-              placeholder="Enter your YouTube API key"
-              status="not-connected"
-            />
-            <ApiKeyInput
-              label="Instagram Graph API"
-              icon={<Instagram className="w-4 h-4 text-pink-500" />}
-              placeholder="Requires Facebook Business account"
-              status="not-connected"
-            />
-            <ApiKeyInput
-              label="Twitter API Key"
-              icon={<Twitter className="w-4 h-4 text-sky-500" />}
-              placeholder="Requires paid Twitter API access"
-              status="not-connected"
-            />
-          </div>
-
-          <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-            <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" />
-              API Setup Requirements
-            </h4>
-            <ul className="text-xs text-muted-foreground space-y-2">
-              <li>• <strong>YouTube:</strong> Create project in Google Cloud Console</li>
-              <li>• <strong>Instagram:</strong> Facebook Business account + app review</li>
-              <li>• <strong>Twitter:</strong> Paid API access required for posting</li>
-              <li>• <strong>Facebook:</strong> Facebook Developer account needed</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
+    <div className="grid gap-6 max-w-4xl">
       {/* Platform Connections */}
       <Card className="border-border shadow-card">
         <CardHeader>
           <CardTitle>Platform Connections</CardTitle>
-          <CardDescription>Connect your social media accounts</CardDescription>
+          <CardDescription>Connect your social media accounts via OAuth</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <PlatformConnection
-            icon={<Youtube className="w-5 h-5 text-red-500" />}
-            name="YouTube"
-            status="disconnected"
-            onConnect={() => handleConnect("YouTube")}
-          />
-          <PlatformConnection
-            icon={<Instagram className="w-5 h-5 text-pink-500" />}
-            name="Instagram"
-            status="disconnected"
-            onConnect={() => handleConnect("Instagram")}
-          />
-          <PlatformConnection
-            icon={<Facebook className="w-5 h-5 text-blue-600" />}
-            name="Facebook"
-            status="disconnected"
-            onConnect={() => handleConnect("Facebook")}
-          />
-          <PlatformConnection
-            icon={<Twitter className="w-5 h-5 text-sky-500" />}
-            name="Twitter"
-            status="disconnected"
-            onConnect={() => handleConnect("Twitter")}
-          />
-          <PlatformConnection
-            icon={<FaPinterest className="w-5 h-5 text-red-600" />}
-            name="Pinterest"
-            status="disconnected"
-            onConnect={() => handleConnect("Pinterest")}
-          />
-          <PlatformConnection
-            icon={<SiThreads className="w-5 h-5" />}
-            name="Threads"
-            status="disconnected"
-            onConnect={() => handleConnect("Threads")}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : (
+            platforms.map((platform) => {
+              const connected = isConnected(platform.platform);
+              return (
+                <div
+                  key={platform.platform}
+                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-secondary/50 transition-smooth"
+                >
+                  <div className="flex items-center gap-3">
+                    {platform.icon}
+                    <div>
+                      <p className="font-medium">{platform.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {platform.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {connected && (
+                      <Badge variant="default">Connected</Badge>
+                    )}
+                    <Button
+                      variant={connected ? "secondary" : "default"}
+                      size="sm"
+                      onClick={() => connected ? handleDisconnect(platform.platform) : handleConnect(platform.platform)}
+                      className={!connected ? "bg-gradient-primary" : ""}
+                    >
+                      {connected ? "Disconnect" : "Connect"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </CardContent>
       </Card>
 
-      {/* Automation Settings */}
-      <Card className="border-border shadow-card lg:col-span-2">
+      {/* API Setup Guide */}
+      <Card className="border-border shadow-card">
         <CardHeader>
-          <CardTitle>Automation Settings</CardTitle>
-          <CardDescription>Configure how your automations behave</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            Setup Guide
+          </CardTitle>
+          <CardDescription>
+            How to get started with platform integrations
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <SettingToggle
-              label="Auto-post on discovery"
-              description="Automatically post new videos as they're found"
-              defaultChecked
-            />
-            <SettingToggle
-              label="Preserve original captions"
-              description="Keep the original video captions when cross-posting"
-              defaultChecked
-            />
-            <SettingToggle
-              label="Add watermark"
-              description="Add your branding to reposted videos"
-              defaultChecked={false}
-            />
-            <SettingToggle
-              label="Email notifications"
-              description="Get notified when automations run"
-              defaultChecked
-            />
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                <Youtube className="w-4 h-4 text-red-500" />
+                YouTube Setup (Ready to Use!)
+              </h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                YouTube API is already configured with your provided API key. You can start creating automations right away!
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>✅ API key configured</li>
+                <li>✅ Can fetch video information</li>
+                <li>✅ Works with Shorts and regular videos</li>
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                <Instagram className="w-4 h-4 text-pink-500" />
+                Instagram (Coming Soon)
+              </h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                OAuth login integration is in development
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Will use official Instagram Graph API</li>
+                <li>• No API key needed - just connect your account</li>
+                <li>• Post directly to Reels and Feed</li>
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+              <h4 className="font-medium text-sm mb-2">Why OAuth Login?</h4>
+              <p className="text-xs text-muted-foreground">
+                This tool uses OAuth (Login with Platform) instead of requiring you to create API keys manually. This makes it:
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1 mt-2">
+                <li>✅ <strong>Free</strong> - No paid API plans needed</li>
+                <li>✅ <strong>Easy</strong> - Just click Connect and log in</li>
+                <li>✅ <strong>Secure</strong> - Platform handles authentication</li>
+                <li>✅ <strong>Simple</strong> - No technical setup required</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -150,78 +205,4 @@ export const Settings = () => {
   );
 };
 
-interface ApiKeyInputProps {
-  label: string;
-  icon: React.ReactNode;
-  placeholder: string;
-  status: "connected" | "not-connected";
-}
-
-const ApiKeyInput = ({ label, icon, placeholder, status }: ApiKeyInputProps) => {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="flex items-center gap-2">
-          {icon}
-          {label}
-        </Label>
-        <Badge variant={status === "connected" ? "default" : "secondary"}>
-          {status === "connected" ? "Connected" : "Not Connected"}
-        </Badge>
-      </div>
-      <div className="flex gap-2">
-        <Input type="password" placeholder={placeholder} />
-        <Button variant="secondary">Save</Button>
-      </div>
-    </div>
-  );
-};
-
-interface PlatformConnectionProps {
-  icon: React.ReactNode;
-  name: string;
-  status: "connected" | "disconnected";
-  onConnect: () => void;
-}
-
-const PlatformConnection = ({ icon, name, status, onConnect }: PlatformConnectionProps) => {
-  return (
-    <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-secondary/50 transition-smooth">
-      <div className="flex items-center gap-3">
-        {icon}
-        <div>
-          <p className="font-medium">{name}</p>
-          <p className="text-xs text-muted-foreground">
-            {status === "connected" ? "Account connected" : "Not connected"}
-          </p>
-        </div>
-      </div>
-      <Button
-        variant={status === "connected" ? "secondary" : "default"}
-        size="sm"
-        onClick={onConnect}
-        className={status === "disconnected" ? "bg-gradient-primary" : ""}
-      >
-        {status === "connected" ? "Disconnect" : "Connect"}
-      </Button>
-    </div>
-  );
-};
-
-interface SettingToggleProps {
-  label: string;
-  description: string;
-  defaultChecked: boolean;
-}
-
-const SettingToggle = ({ label, description, defaultChecked }: SettingToggleProps) => {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="space-y-1">
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      <Switch defaultChecked={defaultChecked} />
-    </div>
-  );
-};
+export default Settings;
