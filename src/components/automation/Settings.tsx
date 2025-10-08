@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Youtube, Instagram, Facebook, Shield, Loader2 } from "lucide-react";
+import { Youtube, Instagram, Facebook, Shield, Loader2, Key } from "lucide-react";
 import { FaPinterest } from "react-icons/fa";
 
 interface SettingsProps {
@@ -15,9 +17,12 @@ export const Settings = ({ userId }: SettingsProps) => {
   const { toast } = useToast();
   const [connectedAccounts, setConnectedAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imgbbApiKey, setImgbbApiKey] = useState("");
+  const [savingImgbb, setSavingImgbb] = useState(false);
 
   useEffect(() => {
     fetchConnectedAccounts();
+    fetchImgbbApiKey();
   }, [userId]);
 
   const fetchConnectedAccounts = async () => {
@@ -32,6 +37,59 @@ export const Settings = ({ userId }: SettingsProps) => {
       setConnectedAccounts(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchImgbbApiKey = async () => {
+    const { data } = await supabase
+      .from('api_keys')
+      .select('api_key')
+      .eq('user_id', userId)
+      .eq('service', 'imgbb')
+      .eq('is_active', true)
+      .single();
+
+    if (data) {
+      setImgbbApiKey(data.api_key);
+    }
+  };
+
+  const saveImgbbApiKey = async () => {
+    if (!imgbbApiKey.trim()) {
+      toast({
+        title: "API Key Required",
+        description: "Please enter your Imgbb API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingImgbb(true);
+
+    try {
+      const { error } = await supabase
+        .from('api_keys')
+        .upsert({
+          user_id: userId,
+          service: 'imgbb',
+          api_key: imgbbApiKey,
+          is_active: true,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: "Imgbb API key saved successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save API key",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingImgbb(false);
+    }
   };
 
   const isConnected = (platform: string) => {
@@ -50,10 +108,10 @@ export const Settings = ({ userId }: SettingsProps) => {
       const authUrl = `https://www.pinterest.com/oauth/?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
       window.location.href = authUrl;
     } else if (platform === "imgbb") {
-      // Imgbb does not support OAuth, but we can store the API key for the user
+      // Imgbb does not support OAuth, scroll to API key section
       toast({
-        title: "Imgbb Integration",
-        description: "Imgbb uses an API key. Please enter your key in the settings (coming soon).",
+        title: "Imgbb API Key",
+        description: "Please scroll down to the API Keys section to configure Imgbb",
       });
     } else if (platform === "youtube") {
       // YouTube OAuth (for posting, not just API key)
@@ -243,6 +301,58 @@ export const Settings = ({ userId }: SettingsProps) => {
                 <li>✅ <strong>Secure</strong> - Platform handles authentication</li>
                 <li>✅ <strong>Simple</strong> - No technical setup required</li>
               </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* API Keys Section */}
+      <Card className="border-border shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="w-5 h-5 text-primary" />
+            API Keys
+          </CardTitle>
+          <CardDescription>
+            Manage API keys for services that don't use OAuth
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="p-4 rounded-lg border border-border bg-secondary/50">
+              <div className="flex items-center gap-2 mb-2">
+                <img src="https://img.icons8.com/color/48/000000/image.png" alt="Imgbb" className="w-5 h-5" />
+                <h4 className="font-medium text-sm">Imgbb Image Hosting</h4>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Store your Imgbb API key to enable image uploads
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="imgbb-key">API Key</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="imgbb-key"
+                    type="password"
+                    placeholder="Enter your Imgbb API key"
+                    value={imgbbApiKey}
+                    onChange={(e) => setImgbbApiKey(e.target.value)}
+                  />
+                  <Button
+                    onClick={saveImgbbApiKey}
+                    disabled={savingImgbb}
+                    className="bg-gradient-primary"
+                  >
+                    {savingImgbb ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Get your API key from <a href="https://api.imgbb.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">imgbb.com</a>
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
