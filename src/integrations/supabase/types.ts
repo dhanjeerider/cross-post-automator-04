@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          id: string
+          user_id: string
+          service: string
+          api_key: string
+          is_active: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          service: string
+          api_key: string
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          service?: string
+          api_key?: string
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automation_rules: {
         Row: {
           created_at: string
@@ -181,6 +211,7 @@ export type Database = {
         | "facebook"
         | "tiktok"
         | "pinterest"
+        | "imgbb"
       post_status: "pending" | "processing" | "posted" | "failed"
     }
     CompositeTypes: {

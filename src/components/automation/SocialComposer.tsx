@@ -105,10 +105,45 @@ export const SocialComposer = ({ userId }: SocialComposerProps) => {
       return;
     }
 
-    toast({
-      title: "Coming Soon!",
-      description: "Direct posting will be available once you connect your accounts in Settings",
-    });
+    // Post to each selected platform
+    try {
+      const postPromises = platforms.map(async (platform) => {
+        const { data, error } = await supabase.functions.invoke('post-to-platform', {
+          body: { 
+            platform,
+            content,
+            userId
+          }
+        });
+
+        if (error) throw error;
+        return { platform, success: true };
+      });
+
+      const results = await Promise.allSettled(postPromises);
+      
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      if (successful > 0) {
+        toast({
+          title: "Posted Successfully!",
+          description: `Posted to ${successful} platform${successful > 1 ? 's' : ''}${failed > 0 ? `, ${failed} failed` : ''}`,
+        });
+      } else {
+        toast({
+          title: "Posting Failed",
+          description: "Failed to post to all selected platforms",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to post content",
+        variant: "destructive",
+      });
+    }
   };
 
   const togglePlatform = (platform: string) => {

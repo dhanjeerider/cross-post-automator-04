@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import OAuthPinterest from "./pages/OAuthPinterest";
+import OAuthYouTube from "./pages/OAuthYouTube";
+import OAuthInstagram from "./pages/OAuthInstagram";
+import OAuthFacebook from "./pages/OAuthFacebook";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +22,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/oauth/pinterest" element={<OAuthPinterest />} />
+          <Route path="/oauth/youtube" element={<OAuthYouTube />} />
+          <Route path="/oauth/instagram" element={<OAuthInstagram />} />
+          <Route path="/oauth/facebook" element={<OAuthFacebook />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

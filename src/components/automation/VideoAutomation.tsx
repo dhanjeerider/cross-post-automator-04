@@ -167,7 +167,7 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
                 <SelectItem value="hashtag">
                   <div className="flex items-center gap-2">
                     <Hash className="w-4 h-4" />
-                    Hashtag Feed (Coming Soon)
+                    Hashtag Feed
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -202,7 +202,7 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
                   <SelectItem value="instagram">
                     <div className="flex items-center gap-2">
                       <Instagram className="w-4 h-4 text-pink-500" />
-                      Instagram (Coming Soon)
+                      Instagram
                     </div>
                   </SelectItem>
                 </SelectContent>
