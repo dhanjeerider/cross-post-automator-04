@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,16 +11,26 @@ interface SettingsProps {
   userId: string;
 }
 
+interface ConnectedAccount {
+  id: string;
+  user_id: string;
+  platform: string;
+  platform_user_id: string;
+  platform_username: string | null;
+  access_token: string;
+  refresh_token: string | null;
+  token_expires_at: string | null;
+  connected_at: string;
+  last_used_at: string | null;
+  is_active: boolean;
+}
+
 export const Settings = ({ userId }: SettingsProps) => {
   const { toast } = useToast();
-  const [connectedAccounts, setConnectedAccounts] = useState<any[]>([]);
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchConnectedAccounts();
-  }, [userId]);
-
-  const fetchConnectedAccounts = async () => {
+  const fetchConnectedAccounts = useCallback(async () => {
     const { data, error } = await supabase
       .from('connected_accounts')
       .select('*')
@@ -32,7 +42,11 @@ export const Settings = ({ userId }: SettingsProps) => {
       setConnectedAccounts(data || []);
     }
     setLoading(false);
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    fetchConnectedAccounts();
+  }, [fetchConnectedAccounts]);
 
   const isConnected = (platform: string) => {
     return connectedAccounts.some(
@@ -46,7 +60,7 @@ export const Settings = ({ userId }: SettingsProps) => {
       let authUrl = '';
 
       switch (platform) {
-        case 'youtube':
+        case 'youtube': {
           const youtubeClientId = import.meta.env.VITE_YOUTUBE_CLIENT_ID || 'YOUR_YOUTUBE_CLIENT_ID';
           authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${youtubeClientId}&` +
@@ -57,8 +71,9 @@ export const Settings = ({ userId }: SettingsProps) => {
             `prompt=consent&` +
             `state=youtube`;
           break;
+        }
 
-        case 'pinterest':
+        case 'pinterest': {
           const pinterestAppId = import.meta.env.VITE_PINTEREST_APP_ID || '1533175';
           authUrl = `https://www.pinterest.com/oauth/?` +
             `client_id=${pinterestAppId}&` +
@@ -67,8 +82,9 @@ export const Settings = ({ userId }: SettingsProps) => {
             `scope=${encodeURIComponent('boards:read,pins:read,pins:write')}&` +
             `state=pinterest`;
           break;
+        }
 
-        case 'instagram':
+        case 'instagram': {
           const instagramClientId = import.meta.env.VITE_INSTAGRAM_CLIENT_ID || 'YOUR_INSTAGRAM_CLIENT_ID';
           authUrl = `https://api.instagram.com/oauth/authorize?` +
             `client_id=${instagramClientId}&` +
@@ -77,8 +93,9 @@ export const Settings = ({ userId }: SettingsProps) => {
             `response_type=code&` +
             `state=instagram`;
           break;
+        }
 
-        case 'facebook':
+        case 'facebook': {
           const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID || 'YOUR_FACEBOOK_APP_ID';
           authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
             `client_id=${facebookAppId}&` +
@@ -87,6 +104,7 @@ export const Settings = ({ userId }: SettingsProps) => {
             `response_type=code&` +
             `state=facebook`;
           break;
+        }
 
         default:
           throw new Error('Unsupported platform');
@@ -94,10 +112,11 @@ export const Settings = ({ userId }: SettingsProps) => {
 
       // Open OAuth flow in the same window
       window.location.href = authUrl;
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to initiate OAuth flow";
       toast({
         title: "Error",
-        description: error.message || "Failed to initiate OAuth flow",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -108,7 +127,7 @@ export const Settings = ({ userId }: SettingsProps) => {
       .from('connected_accounts')
       .update({ is_active: false })
       .eq('user_id', userId)
-      .eq('platform', platform as any);
+      .eq('platform', platform);
 
     if (error) {
       toast({
