@@ -40,11 +40,35 @@ export const Settings = ({ userId }: SettingsProps) => {
     );
   };
 
-  const handleConnect = (platform: string) => {
-    toast({
-      title: "Coming Soon!",
-      description: `OAuth connection for ${platform} will be available soon. For now, you can use the YouTube API for fetching videos.`,
-    });
+  const handleConnect = async (platform: string) => {
+    if (platform === "pinterest") {
+      // Pinterest OAuth2: https://developers.pinterest.com/docs/api/v5/#operation/oauth2_Authorize
+      const clientId = "1533175";
+      const redirectUri = `${window.location.origin}/oauth/pinterest`;
+      const scope = "pins:read,pins:write,boards:read,boards:write";
+      const state = Math.random().toString(36).substring(2);
+      const authUrl = `https://www.pinterest.com/oauth/?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+      window.location.href = authUrl;
+    } else if (platform === "imgbb") {
+      // Imgbb does not support OAuth, but we can store the API key for the user
+      toast({
+        title: "Imgbb Integration",
+        description: "Imgbb uses an API key. Please enter your key in the settings (coming soon).",
+      });
+    } else if (platform === "youtube") {
+      // YouTube OAuth (for posting, not just API key)
+      const clientId = "YOUR_YOUTUBE_CLIENT_ID"; // TODO: Replace with actual client id
+      const redirectUri = `${window.location.origin}/oauth/youtube`;
+      const scope = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly";
+      const state = Math.random().toString(36).substring(2);
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&state=${state}`;
+      window.location.href = authUrl;
+    } else {
+      toast({
+        title: "Coming Soon!",
+        description: `OAuth connection for ${platform} will be available soon.`,
+      });
+    }
   };
 
   const handleDisconnect = async (platform: string) => {
@@ -89,7 +113,13 @@ export const Settings = ({ userId }: SettingsProps) => {
       name: "Pinterest",
       icon: <FaPinterest className="w-5 h-5 text-red-600" />,
       platform: "pinterest",
-      description: "Create Pins"
+      description: "Create Pins via OAuth"
+    },
+    {
+      name: "Imgbb",
+      icon: <img src="https://img.icons8.com/color/48/000000/image.png" alt="Imgbb" className="w-5 h-5" />,
+      platform: "imgbb",
+      description: "Upload images via API key"
     }
   ];
 
