@@ -2,7 +2,11 @@ project_id = "graluwrigdryungsfwfw"
 
 # Edge Functions Configuration
 # Environment variables should be set via Supabase Dashboard or CLI
-# Required: GEMINI_API_KEY for generate-ai-caption function
+# Required Environment Variables:
+# - GEMINI_API_KEY: For AI caption generation (generate-ai-caption function)
+# - YOUTUBE_API_KEY: For YouTube video fetching (fetch-youtube-video function)
+# - PINTEREST_API_KEY: For Pinterest integration
+# - IMGBB_API_KEY: For image uploads
 
 [functions.fetch-youtube-video]
 verify_jwt = true

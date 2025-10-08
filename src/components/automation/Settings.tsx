@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Youtube, Instagram, Facebook, Shield, Loader2 } from "lucide-react";
 import { FaPinterest } from "react-icons/fa";
+import { OAUTH_CONFIG, API_KEYS } from "@/config/apiKeys";
 
 interface SettingsProps {
   userId: string;
@@ -40,11 +41,45 @@ export const Settings = ({ userId }: SettingsProps) => {
     );
   };
 
-  const handleConnect = (platform: string) => {
-    toast({
-      title: "Coming Soon!",
-      description: `OAuth connection for ${platform} will be available soon. For now, you can use the YouTube API for fetching videos.`,
-    });
+  const handleConnect = async (platform: string) => {
+    if (platform === "pinterest") {
+      // Pinterest OAuth2: https://developers.pinterest.com/docs/api/v5/#operation/oauth2_Authorize
+      const clientId = OAUTH_CONFIG.PINTEREST.CLIENT_ID;
+      const redirectUri = `${window.location.origin}/oauth/pinterest`;
+      const scope = "pins:read,pins:write,boards:read,boards:write";
+      const state = Math.random().toString(36).substring(2);
+      const authUrl = `https://www.pinterest.com/oauth/?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+      window.location.href = authUrl;
+    } else if (platform === "instagram") {
+      // Instagram OAuth (via Facebook Graph API)
+      toast({
+        title: "Instagram OAuth",
+        description: "Instagram login requires a Facebook App ID. Please configure your app in the Facebook Developer Console first.",
+      });
+    } else if (platform === "facebook") {
+      // Facebook OAuth
+      toast({
+        title: "Facebook OAuth",
+        description: "Facebook login requires an App ID. Please configure your app in the Facebook Developer Console first.",
+      });
+    } else if (platform === "youtube") {
+      // YouTube OAuth (for posting, not just API key)
+      toast({
+        title: "YouTube OAuth",
+        description: "YouTube OAuth requires a Google Cloud Console client ID. For now, the YouTube API key is configured for fetching video data.",
+      });
+    } else if (platform === "imgbb") {
+      // Imgbb uses API key, not OAuth
+      toast({
+        title: "Imgbb Integration",
+        description: `Imgbb uses an API key: ${API_KEYS.IMGBB}. This is already configured.`,
+      });
+    } else {
+      toast({
+        title: "Coming Soon!",
+        description: `OAuth connection for ${platform} will be available soon.`,
+      });
+    }
   };
 
   const handleDisconnect = async (platform: string) => {
@@ -89,7 +124,13 @@ export const Settings = ({ userId }: SettingsProps) => {
       name: "Pinterest",
       icon: <FaPinterest className="w-5 h-5 text-red-600" />,
       platform: "pinterest",
-      description: "Create Pins"
+      description: "Create Pins via OAuth"
+    },
+    {
+      name: "Imgbb",
+      icon: <img src="https://img.icons8.com/color/48/000000/image.png" alt="Imgbb" className="w-5 h-5" />,
+      platform: "imgbb",
+      description: "Upload images via API key"
     }
   ];
 
@@ -173,11 +214,41 @@ export const Settings = ({ userId }: SettingsProps) => {
 
             <div className="p-4 rounded-lg bg-secondary/50 border border-border">
               <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                <Instagram className="w-4 h-4 text-pink-500" />
-                Instagram (Coming Soon)
+                <FaPinterest className="w-4 h-4 text-red-600" />
+                Pinterest (Ready to Use!)
               </h4>
               <p className="text-xs text-muted-foreground mb-2">
-                OAuth login integration is in development
+                Pinterest OAuth is configured with App ID 1533175. Click Connect to start!
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>✅ OAuth configured</li>
+                <li>✅ Can create Pins</li>
+                <li>✅ Access to boards</li>
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                <img src="https://img.icons8.com/color/48/000000/image.png" alt="Imgbb" className="w-4 h-4" />
+                Imgbb (Ready to Use!)
+              </h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                Imgbb API key is configured for image uploads.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>✅ API key configured</li>
+                <li>✅ Can upload images</li>
+                <li>✅ Get shareable image URLs</li>
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                <Instagram className="w-4 h-4 text-pink-500" />
+                Instagram (Configuration Needed)
+              </h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                Requires Facebook App setup
               </p>
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li>• Will use official Instagram Graph API</li>
