@@ -14,7 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      automation_rules: {
+        Row: {
+          created_at: string
+          custom_caption_template: string | null
+          id: string
+          last_run_at: string | null
+          name: string
+          source_identifier: string
+          source_platform: Database["public"]["Enums"]["platform_type"]
+          source_type: string
+          status: Database["public"]["Enums"]["automation_status"] | null
+          target_platforms: Database["public"]["Enums"]["platform_type"][]
+          updated_at: string
+          use_ai_captions: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_caption_template?: string | null
+          id?: string
+          last_run_at?: string | null
+          name: string
+          source_identifier: string
+          source_platform: Database["public"]["Enums"]["platform_type"]
+          source_type: string
+          status?: Database["public"]["Enums"]["automation_status"] | null
+          target_platforms: Database["public"]["Enums"]["platform_type"][]
+          updated_at?: string
+          use_ai_captions?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_caption_template?: string | null
+          id?: string
+          last_run_at?: string | null
+          name?: string
+          source_identifier?: string
+          source_platform?: Database["public"]["Enums"]["platform_type"]
+          source_type?: string
+          status?: Database["public"]["Enums"]["automation_status"] | null
+          target_platforms?: Database["public"]["Enums"]["platform_type"][]
+          updated_at?: string
+          use_ai_captions?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      connected_accounts: {
+        Row: {
+          access_token: string
+          connected_at: string
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_user_id: string
+          platform_username: string | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_user_id: string
+          platform_username?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          platform?: Database["public"]["Enums"]["platform_type"]
+          platform_user_id?: string
+          platform_username?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      posted_content: {
+        Row: {
+          automation_rule_id: string | null
+          caption: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          posted_at: string | null
+          source_platform: Database["public"]["Enums"]["platform_type"]
+          source_video_id: string
+          source_video_title: string | null
+          source_video_url: string
+          status: Database["public"]["Enums"]["post_status"] | null
+          target_platform: Database["public"]["Enums"]["platform_type"]
+          target_post_id: string | null
+          target_post_url: string | null
+          user_id: string
+        }
+        Insert: {
+          automation_rule_id?: string | null
+          caption?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          posted_at?: string | null
+          source_platform: Database["public"]["Enums"]["platform_type"]
+          source_video_id: string
+          source_video_title?: string | null
+          source_video_url: string
+          status?: Database["public"]["Enums"]["post_status"] | null
+          target_platform: Database["public"]["Enums"]["platform_type"]
+          target_post_id?: string | null
+          target_post_url?: string | null
+          user_id: string
+        }
+        Update: {
+          automation_rule_id?: string | null
+          caption?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          posted_at?: string | null
+          source_platform?: Database["public"]["Enums"]["platform_type"]
+          source_video_id?: string
+          source_video_title?: string | null
+          source_video_url?: string
+          status?: Database["public"]["Enums"]["post_status"] | null
+          target_platform?: Database["public"]["Enums"]["platform_type"]
+          target_post_id?: string | null
+          target_post_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posted_content_automation_rule_id_fkey"
+            columns: ["automation_rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +174,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      automation_status: "active" | "paused" | "error"
+      platform_type:
+        | "youtube"
+        | "instagram"
+        | "facebook"
+        | "tiktok"
+        | "pinterest"
+      post_status: "pending" | "processing" | "posted" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +308,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      automation_status: ["active", "paused", "error"],
+      platform_type: [
+        "youtube",
+        "instagram",
+        "facebook",
+        "tiktok",
+        "pinterest",
+      ],
+      post_status: ["pending", "processing", "posted", "failed"],
+    },
   },
 } as const
