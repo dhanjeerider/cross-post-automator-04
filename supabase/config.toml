@@ -5,3 +5,15 @@ verify_jwt = true
 
 [functions.generate-ai-caption]
 verify_jwt = true
+
+[functions.oauth-youtube]
+verify_jwt = false
+
+[functions.oauth-pinterest]
+verify_jwt = false
+
+[functions.oauth-instagram]
+verify_jwt = false
+
+[functions.oauth-facebook]
+verify_jwt = false
