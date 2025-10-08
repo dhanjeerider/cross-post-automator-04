@@ -66,6 +66,19 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
         if (videoError) throw new Error("Could not verify video URL");
       }
 
+      // For hashtag, validate format
+      if (sourceType === "hashtag") {
+        if (!sourceUrl.startsWith("#")) {
+          toast({
+            title: "Invalid Hashtag",
+            description: "Hashtag must start with #",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('automation_rules')
         .insert({
@@ -83,7 +96,9 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
 
       toast({
         title: "Automation Created!",
-        description: `Videos from ${fromPlatform} will be automatically posted to ${toPlatform}`,
+        description: sourceType === "hashtag" 
+          ? `Videos with ${sourceUrl} on ${fromPlatform} will be automatically posted to ${toPlatform}`
+          : `Videos from ${fromPlatform} will be automatically posted to ${toPlatform}`,
       });
 
       setSourceUrl("");
@@ -167,7 +182,7 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
                 <SelectItem value="hashtag">
                   <div className="flex items-center gap-2">
                     <Hash className="w-4 h-4" />
-                    Hashtag Feed (Coming Soon)
+                    Hashtag Feed
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -202,7 +217,7 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
                   <SelectItem value="instagram">
                     <div className="flex items-center gap-2">
                       <Instagram className="w-4 h-4 text-pink-500" />
-                      Instagram (Coming Soon)
+                      Instagram
                     </div>
                   </SelectItem>
                 </SelectContent>

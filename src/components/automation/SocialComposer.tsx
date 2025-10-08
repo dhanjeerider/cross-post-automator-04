@@ -105,10 +105,37 @@ export const SocialComposer = ({ userId }: SocialComposerProps) => {
       return;
     }
 
-    toast({
-      title: "Coming Soon!",
-      description: "Direct posting will be available once you connect your accounts in Settings",
-    });
+    try {
+      // Save post to database for processing
+      const { error } = await supabase
+        .from('posted_content')
+        .insert(
+          platforms.map(platform => ({
+            user_id: userId,
+            platform: platform as any,
+            content_text: content,
+            status: 'pending',
+            source_url: null,
+            posted_at: null,
+          }))
+        );
+
+      if (error) throw error;
+
+      toast({
+        title: "Post Queued!",
+        description: `Your content has been queued for posting to ${platforms.join(', ')}`,
+      });
+
+      // Clear content after successful submission
+      setContent("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to queue post",
+        variant: "destructive",
+      });
+    }
   };
 
   const togglePlatform = (platform: string) => {
