@@ -1,8 +1,17 @@
-# Welcome to your Lovable project
+# Cross-Post Automator
+
+A social media automation tool with AI-powered content generation using Google Gemini.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/88897642-1025-4e61-9337-fe4a57c3df13
+
+## Features
+
+- 🤖 AI-powered caption generation using Google Gemini
+- 📱 Multi-platform support (YouTube, Instagram, Facebook, Pinterest, TikTok)
+- 🔄 Automated cross-posting
+- 🎨 Platform-specific content optimization
 
 ## How can I edit this code?
 
@@ -59,6 +68,8 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Backend & Edge Functions)
+- Google Gemini AI (Content Generation)
 
 ## How can I deploy this project?
 
@@ -71,3 +82,15 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Environment Setup
+
+### Gemini AI Configuration
+
+The project uses Google Gemini AI for content generation. To set up:
+
+1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. For Supabase Edge Functions deployment, see [supabase/DEPLOYMENT.md](./supabase/DEPLOYMENT.md)
+3. Current API key (already configured): `AIzaSyCyN_yWroef3t0yPWy-feJc89s_7Nrh-dc`
+
+For more details on Supabase functions, see [supabase/functions/README.md](./supabase/functions/README.md)

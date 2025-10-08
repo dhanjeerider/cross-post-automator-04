@@ -1,5 +1,9 @@
 project_id = "graluwrigdryungsfwfw"
 
+# Edge Functions Configuration
+# Environment variables should be set via Supabase Dashboard or CLI
+# Required: GEMINI_API_KEY for generate-ai-caption function
+
 [functions.fetch-youtube-video]
 verify_jwt = true
 
