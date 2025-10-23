@@ -9,3 +9,12 @@ verify_jwt = true
 
 [functions.generate-ai-caption]
 verify_jwt = true
+
+[functions.oauth-callback]
+verify_jwt = false
+
+[functions.execute-automation]
+verify_jwt = true
+
+[functions.post-to-platform]
+verify_jwt = true

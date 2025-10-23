@@ -136,6 +136,29 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
     }
   };
 
+  const handleRunAutomation = async (ruleId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('execute-automation', {
+        body: { automationId: ruleId, userId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Automation Running",
+        description: "Your content is being posted to the selected platforms.",
+      });
+
+      fetchAutomationRules();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to run automation",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Configuration Card */}
@@ -294,6 +317,14 @@ export const VideoAutomation = ({ userId }: VideoAutomationProps) => {
                     {rule.source_identifier}
                   </p>
                   <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-gradient-primary"
+                      onClick={() => handleRunAutomation(rule.id)}
+                    >
+                      <Play className="h-3 w-3 mr-1" />
+                      Run Now
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
