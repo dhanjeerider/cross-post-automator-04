@@ -15,10 +15,22 @@ export const Settings = ({ userId }: SettingsProps) => {
   const { toast } = useToast();
   const [connectedAccounts, setConnectedAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [oauthConfig, setOauthConfig] = useState<any>(null);
 
   useEffect(() => {
     fetchConnectedAccounts();
+    fetchOAuthConfig();
   }, [userId]);
+
+  const fetchOAuthConfig = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-oauth-config');
+      if (error) throw error;
+      setOauthConfig(data);
+    } catch (error) {
+      console.error('Error fetching OAuth config:', error);
+    }
+  };
 
   const fetchConnectedAccounts = async () => {
     const { data, error } = await supabase
@@ -41,28 +53,71 @@ export const Settings = ({ userId }: SettingsProps) => {
   };
 
   const handleConnect = async (platform: string) => {
+    if (!oauthConfig) {
+      toast({
+        title: "Configuration Loading",
+        description: "Please wait while we load the configuration...",
+      });
+      return;
+    }
+
     if (platform === "pinterest") {
-      // Pinterest OAuth2: https://developers.pinterest.com/docs/api/v5/#operation/oauth2_Authorize
-      const clientId = "1533175";
+      const clientId = oauthConfig.pinterest.clientId;
       const redirectUri = `${window.location.origin}/oauth/pinterest`;
       const scope = "pins:read,pins:write,boards:read,boards:write";
       const state = Math.random().toString(36).substring(2);
       const authUrl = `https://www.pinterest.com/oauth/?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
       window.location.href = authUrl;
+    } else if (platform === "youtube") {
+      const clientId = oauthConfig.youtube.clientId;
+      if (!clientId) {
+        toast({
+          title: "Setup Required",
+          description: "YouTube OAuth credentials need to be configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const redirectUri = `${window.location.origin}/oauth/youtube`;
+      const scope = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly";
+      const state = Math.random().toString(36).substring(2);
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&state=${state}&prompt=consent`;
+      window.location.href = authUrl;
+    } else if (platform === "instagram") {
+      const clientId = oauthConfig.instagram.clientId;
+      if (!clientId) {
+        toast({
+          title: "Setup Required",
+          description: "Instagram OAuth credentials need to be configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const redirectUri = `${window.location.origin}/oauth/instagram`;
+      const scope = "user_profile,user_media";
+      const state = Math.random().toString(36).substring(2);
+      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${state}`;
+      window.location.href = authUrl;
+    } else if (platform === "facebook") {
+      const clientId = oauthConfig.facebook.clientId;
+      if (!clientId) {
+        toast({
+          title: "Setup Required",
+          description: "Facebook OAuth credentials need to be configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const redirectUri = `${window.location.origin}/oauth/facebook`;
+      const scope = "pages_show_list,pages_read_engagement,pages_manage_posts";
+      const state = Math.random().toString(36).substring(2);
+      const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${state}`;
+      window.location.href = authUrl;
     } else if (platform === "imgbb") {
-      // Imgbb does not support OAuth, but we can store the API key for the user
       toast({
         title: "Imgbb Integration",
         description: "Imgbb uses an API key. Please enter your key in the settings (coming soon).",
       });
-    } else if (platform === "youtube") {
-      // YouTube OAuth (for posting, not just API key)
-      const clientId = "YOUR_YOUTUBE_CLIENT_ID"; // TODO: Replace with actual client id
-      const redirectUri = `${window.location.origin}/oauth/youtube`;
-      const scope = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly";
-      const state = Math.random().toString(36).substring(2);
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&state=${state}`;
-      window.location.href = authUrl;
     } else {
       toast({
         title: "Coming Soon!",
