@@ -12,6 +12,7 @@ A social media automation tool with AI-powered content generation using Google G
 - 📱 Multi-platform support (YouTube, Instagram, Facebook, Pinterest, TikTok)
 - 🔄 Automated cross-posting
 - 🎨 Platform-specific content optimization
+- 👁️ **Internal Browser Preview** - View app in a popup dialog without leaving the page
 
 ## How can I edit this code?
 
@@ -94,3 +95,18 @@ The project uses Google Gemini AI for content generation. To set up:
 3. Current API key (already configured): `AIzaSyCyN_yWroef3t0yPWy-feJc89s_7Nrh-dc`
 
 For more details on Supabase functions, see [supabase/functions/README.md](./supabase/functions/README.md)
+
+## Preview Feature
+
+The application includes an internal browser preview feature that allows you to view the app in a modal dialog:
+
+- Click the **Preview** button (with eye icon) in the header of the main application
+- The app opens in a large modal dialog (90% viewport height) 
+- Interact with the preview or click outside to close
+- Use the "Open in new tab" link for a full browser experience
+- Visit `/preview-demo` route to see a demonstration of this feature
+
+This is perfect for:
+- Quick testing without navigating away
+- Demos and presentations
+- Maintaining your workflow while previewing changes
